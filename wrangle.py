@@ -30,9 +30,9 @@ def get_dummies(train, val, test):
     Returns:
     train, val, test (pd.DataFrames): Modified datasets with dummies and renamed columns.
     """
-    # Specify columns to convert into dummies
-    columns_to_convert = ['wine_type']
-
+    # Now you can proceed with one-hot encoding
+    columns_to_convert = ['wine_type', 'cluster']
+    
     # Perform conversion
     train = pd.get_dummies(train, columns=columns_to_convert)
     val = pd.get_dummies(val, columns=columns_to_convert)
@@ -81,8 +81,8 @@ def scaled_data(train, val, test, scaler_type='standard'):
     else:
         raise ValueError("Invalid scaler_type. Choose from 'standard', 'minmax', 'robust', 'quantile'.")
 
-    # Exclude 'cluster' and 'quality' from features to scale
-    features_to_scale = [col for col in train.columns if col not in ['cluster', 'quality']]
+    # Exclude 'quality' from features to scale
+    features_to_scale = train.columns.difference(['quality', 'cluster'])
     
     # Fit the scaler on the training data and transform all sets
     train[features_to_scale] = scaler.fit_transform(train[features_to_scale])
@@ -90,3 +90,4 @@ def scaled_data(train, val, test, scaler_type='standard'):
     test[features_to_scale] = scaler.transform(test[features_to_scale])
 
     return train, val, test
+

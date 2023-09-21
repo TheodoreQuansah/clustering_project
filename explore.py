@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from math import sqrt
 from scipy.stats import pearsonr
 from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, PolynomialFeatures
 from sklearn.metrics import mean_squared_error
 from scipy.stats import ttest_ind, f_oneway
 
@@ -16,7 +16,7 @@ from scipy.stats import ttest_ind, f_oneway
 warnings.simplefilter("ignore")
 
 
-def explore_2(df, features, target_variable):
+def explore_2(df, df2, df3, features, target_variable):
 
     plotted_features = set()  # Keep track of plotted features
 
@@ -43,14 +43,21 @@ def explore_2(df, features, target_variable):
         
         # Feature Selection
         selected_features = df[[f1, f2]]
+        selected_features2 = df2[[f1, f2]]
+        selected_features3 = df3[[f1, f2]]
         
         # Standardize Features
         scaler = StandardScaler()
         scaled_features = scaler.fit_transform(selected_features)
-        
+        scaled_features2 = scaler.fit_transform(selected_features2)
+        scaled_features3 = scaler.fit_transform(selected_features3)
+    
         # Cluster Using K-Means
         kmeans = KMeans(n_clusters=3, random_state=42)
         df['cluster'] = kmeans.fit_predict(scaled_features)
+        df2['cluster'] = kmeans.fit_predict(scaled_features2)
+        df3['cluster'] = kmeans.fit_predict(scaled_features3)
+
         
         # 3. Assess Cluster Utility
         
@@ -79,7 +86,7 @@ def explore_2(df, features, target_variable):
 
 
 
-def explore(df, f1, f2, target_variable):
+def explore(df, df2, df3, f1, f2, target_variable):
 
     # 1a. Explore the Interaction between Independent Variables and the Target Variable
 
@@ -109,14 +116,20 @@ def explore(df, f1, f2, target_variable):
 
     # Feature Selection
     selected_features = df[[f1, f2]]
-
+    selected_features2 = df2[[f1, f2]]
+    selected_features3 = df3[[f1, f2]]
+    
     # Standardize Features
     scaler = StandardScaler()
     scaled_features = scaler.fit_transform(selected_features)
+    scaled_features2 = scaler.fit_transform(selected_features2)
+    scaled_features3 = scaler.fit_transform(selected_features3)
 
     # Cluster Using K-Means
     kmeans = KMeans(n_clusters=3, random_state=42)
     df['cluster'] = kmeans.fit_predict(scaled_features)
+    df2['cluster'] = kmeans.fit_predict(scaled_features2)
+    df3['cluster'] = kmeans.fit_predict(scaled_features3)
 
     # 3. Assess Cluster Utility
 
@@ -144,7 +157,7 @@ def explore(df, f1, f2, target_variable):
     print(f"F-Statistic for cluster vs. {target_variable}: {f_stat}, P-Value: {p_value}")
 
 
-def explore2(df, f1, f2, target_variable):
+def explore2(df, df2, df3, f1, f2, target_variable):
 
     # 1a. Explore the Interaction between Independent Variables and the Target Variable
 
@@ -175,14 +188,20 @@ def explore2(df, f1, f2, target_variable):
 
     # Feature Selection
     selected_features = df[[f1, f2]]
-
+    selected_features2 = df2[[f1, f2]]
+    selected_features3 = df3[[f1, f2]]
+        
     # Standardize Features
     scaler = StandardScaler()
     scaled_features = scaler.fit_transform(selected_features)
-
+    scaled_features2 = scaler.fit_transform(selected_features2)
+    scaled_features3 = scaler.fit_transform(selected_features3)
+    
     # Cluster Using K-Means
     kmeans = KMeans(n_clusters=3, random_state=42)
     df['cluster'] = kmeans.fit_predict(scaled_features)
+    df2['cluster'] = kmeans.fit_predict(scaled_features2)
+    df3['cluster'] = kmeans.fit_predict(scaled_features3)
 
     # 3. Assess Cluster Utility
 
@@ -242,3 +261,61 @@ def eval_model(y_actual, y_hat):
     float: The calculated root mean squared error (RMSE) rounded to two decimal places.
     """
     return round(sqrt(mean_squared_error(y_actual, y_hat)), 2)
+
+
+def train_model(model, X_train, y_train, X_val, y_val):
+    """
+    Train a machine learning model and evaluate its performance on training and validation data.
+
+    Parameters:
+    model: The machine learning model to be trained.
+    X_train (array-like): Training features.
+    y_train (array-like): Training target values.
+    X_val (array-like): Validation features.
+    y_val (array-like): Validation target values.
+
+    Returns:
+    model: Trained machine learning model.
+    """
+    model.fit(X_train, y_train)
+    
+    train_preds = model.predict(X_train)
+    
+    train_rmse = eval_model(y_train, train_preds)
+    
+    val_preds = model.predict(X_val)
+    
+    val_rmse = eval_model(y_val, val_preds)
+    
+    print(f'The train RMSE is {round(train_rmse, 2)}.')
+    print(f'The validate RMSE is {round(val_rmse, 2)}.')
+
+
+def polynomial_feature_expansion(X_train, X_val, X_test, degree=2):
+    """
+    Perform polynomial feature expansion for training and validation datasets.
+
+    Parameters:
+    X_train (pd.DataFrame): Training features.
+    X_val (pd.DataFrame): Validation features.
+    X_test (pd.DataFrame): Test features.
+    degree (int): Degree of polynomial features to be created (default is 2).
+
+    Returns:
+    pd.DataFrame: Training features with polynomial expansion.
+    pd.DataFrame: Validation features with polynomial expansion.
+    pd.DataFrame: Test features with polynomial expansion.
+    """
+    # Create an instance of PolynomialFeatures
+    poly = PolynomialFeatures(degree=degree)
+
+    # Transform the training features into polynomial features
+    X_train_s = poly.fit_transform(X_train)
+
+    # Transform the validation features into polynomial features
+    X_val_s = poly.fit_transform(X_val)
+
+    # Transform the test features into polynomial features
+    X_test_s = poly.fit_transform(X_test)
+
+    return X_train_s, X_val_s, X_test_s, poly
